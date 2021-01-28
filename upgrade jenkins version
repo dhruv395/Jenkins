@@ -1,0 +1,30 @@
+https://www.thegeekstuff.com/2016/06/upgrade-jenkins-and-plugins/
+
+0.
+stop jenkins service
+
+Download New Jenkins War File
+1.
+cd /downloads
+wget http://updates.jenkins-ci.org/download/war/2.9/jenkins.war
+
+Note: If you’ve installed Jenkins as part of yum install, then you should do “yum update jenkins”,
+ which will upgrade the war file accordingly
+
+
+2.
+Install the New Jenkins War File
+Before you copy the new version of the jenkins war file, take a backup of the existing version of jenkins war file.
+
+cp /usr/lib/jenkins/jenkins.war /downloads/jenkins.war.previous.version
+
+3.
+Next, copy the newly downloaded war file to the /usr/lib/jenkins directory.
+cp /downloads/jenkins.war /usr/lib/jenkins/
+
+4.
+start the Jenkins service
+
+5.
+Post Upgrade Tasks
+Update plugins
