@@ -1,0 +1,27 @@
+pipeline {
+   agent any
+
+   stages {
+       stage('Cloning code') {
+           steps {
+               git credentialsId: '*************', url: 'https://github.com/dhruv395/alexa.git'
+            }
+        }
+        
+        stage('Installing npm at runtime and zipping node code') {
+            steps {
+                sh "npm install"
+                sh "rm -rf *.zip"
+                sh "zip -r lambda.zip *"
+            }
+        }
+        
+        stage('Pushing zip to Production Lambda') {
+            steps {
+                sh "aws lambda update-function-code --function-name Prod-Test --zip-file fileb://lambda.zip"
+            }
+        }
+        //aws lambda update-function-code --function-name My-Test --zip-file fileb://lambda.zip
+        
+    }
+}
