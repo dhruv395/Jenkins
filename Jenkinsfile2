@@ -1,0 +1,42 @@
+pipeline{
+
+	agent any
+	options {
+	    timestamps ()
+        skipStagesAfterUnstable()
+    }
+	
+	stages{
+		stage('Git checkout'){
+			steps {
+			git credentialsId: '*********', poll: false, url: 'https://github.com/dhruv395/alexa-web.git'
+			}
+		}
+		
+			stage('Shell commands to build the code'){
+			        steps{
+			            nodejs('Nodejs14.15.5') {
+			                sh "rm -rf dev-alexa-frontend.tar.gz"
+                            sh "npm install"
+                            sh 'ng build --base-href="/alexa/"'
+                            sh "tar -czvf dev-alexa-frontend.tar.gz *"
+			                
+			            }
+			        }
+                    
+			}
+			
+			stage('archive the artifacts'){
+			    steps{
+			        archiveArtifacts artifacts: 'dev-alexa-frontend.tar.gz', followSymlinks: false
+			    }
+			}
+			
+			stage('deployment of build artifact'){
+			    steps{
+			        sshPublisher(publishers: [sshPublisherDesc(configName: 'Dev-server', transfers: [sshTransfer(cleanRemote: false, excludes: '', execCommand: '/home/ubuntu/scripts/deploy_alexa.sh', execTimeout: 120000, flatten: false, makeEmptyDirs: false, noDefaultExcludes: false, patternSeparator: '[, ]+', remoteDirectory: '/dev-alexa', remoteDirectorySDF: false, removePrefix: '', sourceFiles: 'dev-alexa-frontend.tar.gz')], usePromotionTimestamp: false, useWorkspaceInPromotion: false, verbose: false)])
+			    }
+			}
+	
+	}
+}
