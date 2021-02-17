@@ -1,0 +1,34 @@
+pipeline {
+    agent any
+    
+	stages {
+    		
+        stage('Cloning code') {
+            steps {
+                git branch: "${BRANCH}", credentialsId: '******', url: 'https://github.com/dhruv395/setting.git'
+            }
+        }
+        
+        stage('Creating tar') {
+            steps {
+                //removing old tar
+                sh 'rm -f setting.tar.gz' 
+                //creating new tar
+                sh 'tar -czvf  setting.tar.gz *'
+            }
+        }
+        
+        stage ('Archiving the artifact') {
+            steps {
+                // This step should not normally be used in your script.
+                archive 'setting.tar.gz'
+            }
+        }
+        
+        stage ('Deploying artifact to eventhandler server') {
+            steps {
+                sshPublisher(publishers: [sshPublisherDesc(configName: 'Dev-server', transfers: [sshTransfer(cleanRemote: false, excludes: '', execCommand: '/home/ubuntu/scripts/deploy.sh', execTimeout: 120000, flatten: false, makeEmptyDirs: false, noDefaultExcludes: false, patternSeparator: '[, ]+', remoteDirectory: 'deploy-homecam-eventhandler-setting/', remoteDirectorySDF: false, removePrefix: '', sourceFiles: 'setting.tar.gz')], usePromotionTimestamp: false, useWorkspaceInPromotion: false, verbose: false)])
+            }
+        }
+    }     
+}
