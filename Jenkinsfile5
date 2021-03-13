@@ -1,0 +1,55 @@
+pipeline {
+    agent any
+	tools {
+		maven 'maven3.6.3'
+		
+	}
+	options {
+	    timestamps ()
+        skipStagesAfterUnstable()
+    }
+
+    stages {
+        stage('git checkout') {
+            steps {
+                git branch: '${BRANCH}', credentialsId: '*****', url: 'https://github.com/dhruv395/java-server.git'           
+				}
+        }
+		
+		stage('building artifact') {
+            steps {
+                sh "mvn clean install package"
+                }
+         }
+         
+         stage('Sonarqube') {
+            environment {
+                scannerHome = tool 'sonarqubescanner'
+				projectName= "backend-aws-pipeline"
+                
+            }
+                steps {
+                    withSonarQubeEnv('sonarqube') {
+                    sh "${scannerHome}/bin/sonar-scanner -Dsonar.java.binaries=target/classes \
+						-Dsonar.projectKey=$projectName \
+						-Dsonar.java.libraries=**/*.jar \
+						-Dsonar.projectVersion=${BUILD_NUMBER} \
+            -Dsonar.sources=/var/lib/jenkins/workspace/backend-aws-pipeline/src/ \
+						-Dsonar.sourceEncoding=UTF-8 \
+						-Dsonar.projectVersion=${BUILD_NUMBER} \
+						-Dsonar.login=sonar \
+						-Dsonar.password=sonar"
+                    }
+                        
+                }
+             
+         }
+        
+		stage('Deploying..'){
+			steps{
+				sshPublisher(publishers: [sshPublisherDesc(configName: 'AWS-DEV-server', transfers: [sshTransfer(cleanRemote: false, excludes: '', execCommand: '/home/ubuntu/script/tomcat_deploy.sh', execTimeout: 120000, flatten: false, makeEmptyDirs: false, noDefaultExcludes: false, patternSeparator: '[, ]+', remoteDirectory: 'tomcat-deploy/', remoteDirectorySDF: false, removePrefix: '', sourceFiles: '**/*.jar')], usePromotionTimestamp: false, useWorkspaceInPromotion: false, verbose: false)])
+			}
+		}
+		
+    }
+}
